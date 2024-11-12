@@ -1,0 +1,81 @@
+// App.js
+import React, { useState } from 'react';
+
+function App() {
+  const [climate, setClimate] = useState('');
+  const [soilType, setSoilType] = useState('');
+  const [areaSize, setAreaSize] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+
+  const handleSubmit = async () => {
+    const response = await fetch('/api/recommendations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ climate, soilType, areaSize })
+    });
+    const data = await response.json();
+    setSuggestions(data);
+  };
+
+  return (
+    <div>
+      <h1>AI-Driven Food Forest Design</h1>
+      <input placeholder="Climate" onChange={e => setClimate(e.target.value)} />
+      <input placeholder="Soil Type" onChange={e => setSoilType(e.target.value)} />
+      <input placeholder="Area Size" onChange={e => setAreaSize(e.target.value)} />
+      <button onClick={handleSubmit}>Get Recommendations</button>
+      <ul>
+        {suggestions.map((s, index) => <li key={index}>{s}</li>)}
+      </ul>
+    </div>
+  );
+}
+
+export default App;
+
+# app.py
+from flask import Flask, request, jsonify
+import random
+
+app = Flask(__name__)
+
+# Sample data for demonstration purposes
+crop_data = {
+    'tropical': ['Mango', 'Papaya', 'Banana'],
+    'temperate': ['Apple', 'Pear', 'Cherry'],
+    'arid': ['Date Palm', 'Fig', 'Pomegranate']
+}
+
+@app.route('/api/recommendations', methods=['POST'])
+def get_recommendations():
+    data = request.get_json()
+    climate = data.get('climate', '').lower()
+    soil_type = data.get('soilType', '').lower()
+    area_size = data.get('areaSize', '')
+
+    # Dummy logic for demonstration
+    recommendations = crop_data.get(climate, [])
+    return jsonify(random.sample(recommendations, min(len(recommendations), 3)))
+
+if __name__ == '__main__':
+    app.run(debug=True)
+# ai_model.py
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+
+# Sample training data
+data = pd.DataFrame({
+    'climate': ['tropical', 'temperate', 'arid'],
+    'soil': ['sandy', 'clay', 'loamy'],
+    'crop': ['Mango', 'Apple', 'Date Palm']
+})
+X = data[['climate', 'soil']]
+y = data['crop']
+
+# Model training
+model = DecisionTreeClassifier()
+model.fit(X, y)
+
+# Example prediction
+def recommend_crop(climate, soil):
+    return model.predict([[climate, soil]])[0]
